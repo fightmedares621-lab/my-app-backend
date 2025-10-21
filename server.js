@@ -42,7 +42,13 @@ const upload = multer({ storage: storage });
 
 // --- JSONBin.io Configuration (UPDATED FOR DISTRIBUTED USERS) ---
 // IMPORTANT: Store your API Key in an environment variable for security
-const API_KEY = process.env.JSONBIN_API_KEY || '$2a$10$dZv5rZdxSfEeUBXIKp7Eh.f2I0ElrsaBjVAFBzc3hXQj58qC08Wt2';
+const API_KEY = process.env.JSONBIN_API_KEY;
+
+// --- CRITICAL: Check for Environment Variables on Startup ---
+if (!API_KEY) {
+    console.error("FATAL ERROR: JSONBIN_API_KEY is not defined. The application cannot start.");
+    process.exit(1); // This stops the server from running
+}
 
 // The two bins that store all user accounts.
 const ALL_USERS_BIN_IDS = [
@@ -2115,6 +2121,13 @@ app.post('/api/skins/equip', async (req, res) => {
         res.status(500).json({ success: false, message: 'An internal server error occurred.' });
     }
 });
+
+// --- Start the server ---
+const server = http.createServer(app);
+
+// --- WebSocket Server for AuthDonate & Among Us ---
+const wss = new WebSocket.Server({ server });
+let players = {};
 
 function broadcast(data) {
     const message = JSON.stringify(data);
